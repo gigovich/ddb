@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/gigovich/ddb/internal/parser"
 )
 
 func main() {
@@ -32,5 +34,11 @@ func main() {
 		fmt.Println("        useful for go:generate tag.")
 	}
 
-	fmt.Println(file)
+	ctx, err := parser.New(file).Parse()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	fmt.Println(ctx)
 }
