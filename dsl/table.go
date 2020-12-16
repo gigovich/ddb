@@ -1,4 +1,4 @@
-package schema
+package dsl
 
 import (
 	"fmt"
@@ -16,11 +16,24 @@ var (
 	ErrNoSuchField = fmt.Errorf("no such field")
 )
 
+// PK fields list
+type PK []interface{}
+
+// Remaps of the field names
+type Remaps map[interface{}]string
+
+// GetBy query single object by fields names or group of fields
+type GetBy [][]interface{}
+
+// ListBy query object list by fields names or gourp of fileds
+type ListBy [][]interface{}
+
 // Table ...
 type Table struct {
-	PK      []string
-	Remaps  map[string]string
-	Getters map[string]struct{}
+	PK     PK
+	Remaps Remaps
+	GetBy  GetBy
+	ListBy ListBy
 
 	ot reflect.Type
 	ov reflect.Value
@@ -42,9 +55,10 @@ func Default(obj interface{}) Table {
 		return t
 	}
 
-	t.PK = []string{"ID"}
-	t.Remaps = make(map[string]string)
-	t.Getters = map[string]struct{}{"ID": struct{}{}}
+	t.PK = PK{}
+	t.Remaps = Remaps{}
+	t.GetBy = GetBy{}
+	t.ListBy = ListBy{}
 
 	t.obj = obj
 	t.ot = reflect.TypeOf(obj).Elem()
