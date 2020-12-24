@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -53,7 +52,7 @@ func (p *Parser) InspectImports(ctx *Context) func(ast.Node) bool {
 			return true
 		}
 
-		if is.Path.Value == `"github.com/gigovich/ddb/schema"` {
+		if is.Path.Value == `"github.com/gigovich/ddb/dsl"` {
 			if is.Name != nil {
 				ctx.SchemaPkgNames[is.Name.String()] = struct{}{}
 			} else {
@@ -83,31 +82,50 @@ func (p *Parser) InspectFuncs(ctx *Context) func(ast.Node) bool {
 			return true
 		}
 
-		return p.inspectSchemaSpecs(ctx, gd)
+		return p.inspectSchemaSpecsFunc(ctx, gd)
 	}
 }
 
-func (p *Parser) inspectSchemaSpecs(ctx *Context, decl *ast.FuncDecl) bool {
+func (p *Parser) inspectSchemaSpecsFunc(ctx *Context, decl *ast.FuncDecl) bool {
+	// check functio name: Schema
 	if decl.Name.String() != "Schema" {
 		return false
 	}
 
-	for _, r := range decl.Type.Results.List {
-		se, ok := r.Type.(*ast.SelectorExpr)
-		if !ok {
-			continue
-		}
-
-		xIdent, ok := se.X.(*ast.Ident)
-		if !ok {
-			continue
-		}
-
-		if _, ok := ctx.SchemaPkgNames[xIdent.Name]; ok && se.Sel.Name == "Table" {
-			fmt.Println(">>>>>>>>>")
-			return true
-		}
+	// check return type: dsl.Table
+	if len(decl.Type.Results.List) != 1 {
+		return false
 	}
 
-	return true
+	r := decl.Type.Results.List[0]
+	se, ok := r.Type.(*ast.SelectorExpr)
+	if !ok {
+		return false
+	}
+
+	xIdent, ok := se.X.(*ast.Ident)
+	if !ok {
+		return false
+	}
+
+	_, ok := ctx.SchemaPkgNames[xIdent.Name]
+	if !ok || se.Sel.Name != "Table" {
+		return false
+	}
+
+	// check reciever type: model.Name
+	if len(decl.Recv.List) != 1 && len(decl.Recv.List[0].Names) != 1 {
+		return false
+	}
+
+	if it, ok := decl.Recv.List[0].Type.(*ast.Ident); !ok || it.Name != ctx.ModelType {
+		return false
+	}
+
+	rc, ok := decl.Recv.List[0].Names[0].(*ast.Ident)
+	if !ok {
+		return false
+	}
+
+	return false
 }

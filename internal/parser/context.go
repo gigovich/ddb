@@ -51,6 +51,9 @@ type Context struct {
 	// PkgName contains name of parsed package
 	PkgName string
 
+	// ModelType identifier
+	ModelType string
+
 	// ModelImport name, by default `model`
 	ModelImport string
 
